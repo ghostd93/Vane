@@ -17,6 +17,10 @@ class OpenAIImageGenerator extends BaseImageGenerator<OpenAIImageConfig> {
   }
 
   async generate(prompt: string): Promise<GeneratedImage[]> {
+    console.info('[images] Calling image API', {
+      baseURL: this.config.baseURL,
+      model: this.config.model,
+    });
     const response = await this.client.images.generate({
       model: this.config.model,
       prompt,
@@ -26,7 +30,7 @@ class OpenAIImageGenerator extends BaseImageGenerator<OpenAIImageConfig> {
       throw new Error('Image API returned no image data');
     }
 
-    return response.data.map((image) => {
+    const images = response.data.map((image) => {
       if (image.b64_json) {
         return {
           url: `data:image/png;base64,${image.b64_json}`,
@@ -36,6 +40,11 @@ class OpenAIImageGenerator extends BaseImageGenerator<OpenAIImageConfig> {
       if (image.url) return { url: image.url, revisedPrompt: image.revised_prompt };
       throw new Error('Image API returned an image without a URL or base64 data');
     });
+
+    console.info('[images] Image API returned successfully', {
+      imageCount: images.length,
+    });
+    return images;
   }
 }
 

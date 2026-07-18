@@ -62,8 +62,14 @@ class SearchAgent {
 
     if (isImageRequest && input.config.imageGenerator) {
       try {
+        console.info('[images] Direct generation started', {
+          prompt: input.followUp,
+        });
         const images = await input.config.imageGenerator.generate(input.followUp);
         if (images.length === 0) throw new Error('The image API returned no images');
+        console.info('[images] Direct generation completed', {
+          imageCount: images.length,
+        });
         session.emitBlock({
           id: crypto.randomUUID(),
           type: 'image',
@@ -71,7 +77,7 @@ class SearchAgent {
         });
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Image generation failed';
-        console.error('Image generation failed:', err);
+        console.error('[images] Direct generation failed:', err);
         session.emitBlock({
           id: crypto.randomUUID(),
           type: 'text',
@@ -213,8 +219,12 @@ class SearchAgent {
         const prompt = String(call.arguments.prompt || '').trim();
         try {
           if (!prompt) throw new Error('An image prompt is required');
+          console.info('[images] Tool generation started', { prompt });
           const images = await input.config.imageGenerator.generate(prompt);
           if (images.length === 0) throw new Error('The image API returned no images');
+          console.info('[images] Tool generation completed', {
+            imageCount: images.length,
+          });
 
           const imageBlock: ImageBlock = {
             id: crypto.randomUUID(), type: 'image', data: { prompt, images },
@@ -226,7 +236,7 @@ class SearchAgent {
           });
         } catch (err) {
           const message = err instanceof Error ? err.message : 'Image generation failed';
-          console.error('Image generation failed:', err);
+          console.error('[images] Tool generation failed:', err);
           agentMessages.push({
             role: 'tool', id: call.id, name: call.name,
             content: JSON.stringify({ error: message }),
