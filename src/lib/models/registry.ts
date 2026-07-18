@@ -3,6 +3,7 @@ import BaseModelProvider, { createProviderInstance } from './base/provider';
 import { getConfiguredModelProviders } from '../config/serverRegistry';
 import { providers } from './providers';
 import { MinimalProvider, ModelList } from './types';
+import BaseImageGenerator from './base/image';
 import configManager from '../config';
 
 class ModelRegistry {
@@ -39,7 +40,7 @@ class ModelRegistry {
 
     await Promise.all(
       this.activeProviders.map(async (p) => {
-        let m: ModelList = { chat: [], embedding: [] };
+        let m: ModelList = { chat: [], embedding: [], image: [] };
 
         try {
           m = await p.provider.getModelList();
@@ -56,6 +57,7 @@ class ModelRegistry {
               },
             ],
             embedding: [],
+            image: [],
           };
         }
 
@@ -64,6 +66,7 @@ class ModelRegistry {
           name: p.name,
           chatModels: m.chat,
           embeddingModels: m.embedding,
+          imageModels: m.image ?? [],
         });
       }),
     );
@@ -91,6 +94,15 @@ class ModelRegistry {
     return model;
   }
 
+  async loadImageModel(
+    providerId: string,
+    modelName: string,
+  ): Promise<BaseImageGenerator<any>> {
+    const provider = this.activeProviders.find((p) => p.id === providerId);
+    if (!provider) throw new Error('Invalid provider id');
+    return provider.provider.loadImageModel(modelName);
+  }
+
   async addProvider(
     type: string,
     name: string,
@@ -108,7 +120,7 @@ class ModelRegistry {
       newProvider.config,
     );
 
-    let m: ModelList = { chat: [], embedding: [] };
+    let m: ModelList = { chat: [], embedding: [], image: [] };
 
     try {
       m = await instance.getModelList();
@@ -125,6 +137,7 @@ class ModelRegistry {
           },
         ],
         embedding: [],
+        image: [],
       };
     }
 
@@ -137,6 +150,7 @@ class ModelRegistry {
       ...newProvider,
       chatModels: m.chat || [],
       embeddingModels: m.embedding || [],
+      imageModels: m.image || [],
     };
   }
 
@@ -166,7 +180,7 @@ class ModelRegistry {
       config,
     );
 
-    let m: ModelList = { chat: [], embedding: [] };
+    let m: ModelList = { chat: [], embedding: [], image: [] };
 
     try {
       m = await instance.getModelList();
@@ -183,6 +197,7 @@ class ModelRegistry {
           },
         ],
         embedding: [],
+        image: [],
       };
     }
 
@@ -195,13 +210,14 @@ class ModelRegistry {
       ...updated,
       chatModels: m.chat || [],
       embeddingModels: m.embedding || [],
+      imageModels: m.image || [],
     };
   }
 
   /* Using async here because maybe in the future we might want to add some validation?? */
   async addProviderModel(
     providerId: string,
-    type: 'embedding' | 'chat',
+    type: 'embedding' | 'chat' | 'image',
     model: any,
   ): Promise<any> {
     const addedModel = configManager.addProviderModel(providerId, type, model);
@@ -210,7 +226,7 @@ class ModelRegistry {
 
   async removeProviderModel(
     providerId: string,
-    type: 'embedding' | 'chat',
+    type: 'embedding' | 'chat' | 'image',
     modelKey: string,
   ): Promise<void> {
     configManager.removeProviderModel(providerId, type, modelKey);

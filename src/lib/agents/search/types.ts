@@ -3,6 +3,7 @@ import BaseLLM from '../../models/base/llm';
 import BaseEmbedding from '@/lib/models/base/embedding';
 import SessionManager from '@/lib/session';
 import { ChatTurnMessage, Chunk } from '@/lib/types';
+import BaseImageGenerator from '@/lib/models/base/image';
 
 export type SearchSources = 'web' | 'discussions' | 'academic';
 
@@ -13,6 +14,7 @@ export type SearchAgentConfig = {
   embedding: BaseEmbedding<any>;
   mode: 'speed' | 'balanced' | 'quality';
   systemInstructions: string;
+  imageGenerator?: BaseImageGenerator<any>;
 };
 
 export type SearchAgentInput = {

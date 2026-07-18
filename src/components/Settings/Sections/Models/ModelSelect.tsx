@@ -9,15 +9,21 @@ const ModelSelect = ({
   type,
 }: {
   providers: ConfigModelProvider[];
-  type: 'chat' | 'embedding';
+  type: 'chat' | 'embedding' | 'image';
 }) => {
   const [selectedModel, setSelectedModel] = useState<string>(
     type === 'chat'
       ? `${localStorage.getItem('chatModelProviderId')}/${localStorage.getItem('chatModelKey')}`
-      : `${localStorage.getItem('embeddingModelProviderId')}/${localStorage.getItem('embeddingModelKey')}`,
+      : type === 'embedding'
+        ? `${localStorage.getItem('embeddingModelProviderId')}/${localStorage.getItem('embeddingModelKey')}`
+        : `${localStorage.getItem('imageModelProviderId')}/${localStorage.getItem('imageModelKey')}`,
   );
   const [loading, setLoading] = useState(false);
-  const { setChatModelProvider, setEmbeddingModelProvider } = useChat();
+  const {
+    setChatModelProvider,
+    setEmbeddingModelProvider,
+    setImageModelProvider,
+  } = useChat();
 
   const handleSave = async (newValue: string) => {
     setLoading(true);
@@ -35,7 +41,7 @@ const ModelSelect = ({
           providerId: providerId,
           key: modelKey,
         });
-      } else {
+      } else if (type === 'embedding') {
         const providerId = newValue.split('/')[0];
         const modelKey = newValue.split('/').slice(1).join('/');
 
@@ -46,6 +52,12 @@ const ModelSelect = ({
           providerId: providerId,
           key: modelKey,
         });
+      } else {
+        const providerId = newValue.split('/')[0];
+        const modelKey = newValue.split('/').slice(1).join('/');
+        localStorage.setItem('imageModelProviderId', providerId);
+        localStorage.setItem('imageModelKey', modelKey);
+        setImageModelProvider({ providerId, key: modelKey });
       }
     } catch (error) {
       console.error('Error saving config:', error);
@@ -60,12 +72,12 @@ const ModelSelect = ({
       <div className="space-y-3 lg:space-y-5">
         <div>
           <h4 className="text-sm lg:text-sm text-black dark:text-white">
-            Select {type === 'chat' ? 'Chat Model' : 'Embedding Model'}
+            Select {type === 'chat' ? 'Chat Model' : type === 'embedding' ? 'Embedding Model' : 'Image Model'}
           </h4>
           <p className="text-[11px] lg:text-xs text-black/50 dark:text-white/50">
             {type === 'chat'
               ? 'Choose which model to use for generating responses'
-              : 'Choose which model to use for generating embeddings'}
+              : type === 'embedding' ? 'Choose which model to use for generating embeddings' : 'Choose which model to use for image generation'}
           </p>
         </div>
         <Select
@@ -79,8 +91,13 @@ const ModelSelect = ({
                     label: `${provider.name} - ${model.name}`,
                   })),
                 )
-              : providers.flatMap((provider) =>
+              : type === 'embedding' ? providers.flatMap((provider) =>
                   provider.embeddingModels.map((model) => ({
+                    value: `${provider.id}/${model.key}`,
+                    label: `${provider.name} - ${model.name}`,
+                  })),
+                ) : providers.flatMap((provider) =>
+                  (provider.imageModels ?? []).map((model) => ({
                     value: `${provider.id}/${model.key}`,
                     label: `${provider.name} - ${model.name}`,
                   })),

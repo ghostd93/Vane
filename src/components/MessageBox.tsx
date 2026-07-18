@@ -24,6 +24,7 @@ import { useChat, Section } from '@/lib/hooks/useChat';
 import Citation from './MessageRenderer/Citation';
 import AssistantSteps from './AssistantSteps';
 import { ResearchBlock } from '@/lib/types';
+import GeneratedImages from './GeneratedImages';
 import Renderer from './Widgets/Renderer';
 import CodeBlock from './MessageRenderer/CodeBlock';
 
@@ -158,6 +159,10 @@ const MessageBox = ({
             )}
 
           {section.widgets.length > 0 && <Renderer widgets={section.widgets} />}
+
+          {section.message.responseBlocks
+            .filter((block): block is typeof block & { type: 'image' } => block.type === 'image')
+            .map((block) => <GeneratedImages key={block.id} block={block} />)}
 
           <div className="flex flex-col space-y-2">
             {sources.length > 0 && (

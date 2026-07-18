@@ -168,7 +168,10 @@ class ConfigManager {
   }
 
   private migrateConfig(config: Config): Config {
-    /* TODO: Add migrations */
+    config.modelProviders = config.modelProviders.map((provider) => ({
+      ...provider,
+      imageModels: provider.imageModels ?? [],
+    }));
     return config;
   }
 
@@ -187,6 +190,7 @@ class ConfigManager {
         type: provider.key,
         chatModels: [],
         embeddingModels: [],
+        imageModels: [],
         config: {},
         required: [],
         hash: '',
@@ -279,6 +283,7 @@ class ConfigManager {
       config,
       chatModels: [],
       embeddingModels: [],
+      imageModels: [],
       hash: hashObj(config),
     };
 
@@ -318,7 +323,7 @@ class ConfigManager {
 
   public addProviderModel(
     providerId: string,
-    type: 'embedding' | 'chat',
+    type: 'embedding' | 'chat' | 'image',
     model: any,
   ) {
     const provider = this.currentConfig.modelProviders.find(
@@ -331,8 +336,10 @@ class ConfigManager {
 
     if (type === 'chat') {
       provider.chatModels.push(model);
-    } else {
+    } else if (type === 'embedding') {
       provider.embeddingModels.push(model);
+    } else {
+      provider.imageModels.push(model);
     }
 
     this.saveConfig();
@@ -342,7 +349,7 @@ class ConfigManager {
 
   public removeProviderModel(
     providerId: string,
-    type: 'embedding' | 'chat',
+    type: 'embedding' | 'chat' | 'image',
     modelKey: string,
   ) {
     const provider = this.currentConfig.modelProviders.find(
@@ -355,9 +362,13 @@ class ConfigManager {
       provider.chatModels = provider.chatModels.filter(
         (m) => m.key !== modelKey,
       );
-    } else {
+    } else if (type === 'embedding') {
       provider.embeddingModels = provider.embeddingModels.filter(
         (m) => m.key != modelKey,
+      );
+    } else {
+      provider.imageModels = provider.imageModels.filter(
+        (m) => m.key !== modelKey,
       );
     }
 

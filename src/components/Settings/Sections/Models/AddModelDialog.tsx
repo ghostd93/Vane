@@ -12,7 +12,7 @@ const AddModel = ({
 }: {
   providerId: string;
   setProviders: React.Dispatch<React.SetStateAction<ConfigModelProvider[]>>;
-  type: 'chat' | 'embedding';
+  type: 'chat' | 'embedding' | 'image';
 }) => {
   const [open, setOpen] = useState(false);
   const [modelName, setModelName] = useState('');
@@ -49,10 +49,14 @@ const AddModel = ({
                 type === 'chat'
                   ? [...provider.chatModels, newModel]
                   : provider.chatModels,
-              embeddingModels:
-                type === 'embedding'
-                  ? [...provider.embeddingModels, newModel]
-                  : provider.embeddingModels,
+                embeddingModels:
+                  type === 'embedding'
+                    ? [...provider.embeddingModels, newModel]
+                    : provider.embeddingModels,
+                imageModels:
+                  type === 'image'
+                    ? [...(provider.imageModels ?? []), newModel]
+                    : provider.imageModels ?? [],
             };
           }
           return provider;
@@ -98,7 +102,7 @@ const AddModel = ({
               <DialogPanel className="w-full mx-4 lg:w-[600px] max-h-[85vh] flex flex-col border bg-light-primary dark:bg-dark-primary border-light-secondary dark:border-dark-secondary rounded-lg">
                 <div className="px-6 pt-6 pb-4">
                   <h3 className="text-black/90 dark:text-white/90 font-medium text-sm">
-                    Add new {type === 'chat' ? 'chat' : 'embedding'} model
+                    Add new {type} model
                   </h3>
                 </div>
                 <div className="border-t border-light-200 dark:border-dark-200" />

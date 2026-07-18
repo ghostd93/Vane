@@ -25,6 +25,7 @@ export const GET = async (req: NextRequest) => {
           chatModels: activeProvider?.chatModels ?? mp.chatModels,
           embeddingModels:
             activeProvider?.embeddingModels ?? mp.embeddingModels,
+          imageModels: activeProvider?.imageModels ?? mp.imageModels ?? [],
         };
       },
     );

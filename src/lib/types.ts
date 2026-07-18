@@ -63,6 +63,15 @@ export type WidgetBlock = {
   };
 };
 
+export type ImageBlock = {
+  id: string;
+  type: 'image';
+  data: {
+    prompt: string;
+    images: { url: string; revisedPrompt?: string }[];
+  };
+};
+
 export type ReasoningResearchBlock = {
   id: string;
   type: 'reasoning';
@@ -120,4 +129,5 @@ export type Block =
   | SourceBlock
   | SuggestionBlock
   | WidgetBlock
+  | ImageBlock
   | ResearchBlock;

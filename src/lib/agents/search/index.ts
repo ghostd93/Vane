@@ -7,7 +7,9 @@ import { WidgetExecutor } from './widgets';
 import db from '@/lib/db';
 import { messages } from '@/lib/db/schema';
 import { and, eq, gt } from 'drizzle-orm';
-import { TextBlock } from '@/lib/types';
+import { ImageBlock, Message, TextBlock } from '@/lib/types';
+import { Tool, ToolCall } from '@/lib/models/types';
+import z from 'zod';
 import { getTokenCount } from '@/lib/utils/splitText';
 
 class SearchAgent {
@@ -125,49 +127,71 @@ class SearchAgent {
       input.config.mode,
     );
 
-    const answerStream = input.config.llm.streamText({
-      messages: [
-        {
-          role: 'system',
-          content: writerPrompt,
-        },
-        ...input.chatHistory,
-        {
-          role: 'user',
-          content: input.followUp,
-        },
-      ],
-    });
-
+    const agentMessages: Message[] = [
+      { role: 'system' as const, content: writerPrompt },
+      ...input.chatHistory,
+      { role: 'user' as const, content: input.followUp },
+    ];
+    const imageTool: Tool[] = input.config.imageGenerator
+      ? [{
+          name: 'generate_image',
+          description: 'Generate an image when the user explicitly asks for an image, illustration, artwork, logo, or visual. Use the user request to write a detailed image prompt.',
+          schema: z.object({ prompt: z.string().describe('A detailed image-generation prompt.') }),
+        }]
+      : [];
     let responseBlockId = '';
 
-    for await (const chunk of answerStream) {
-      if (!responseBlockId) {
-        const block: TextBlock = {
-          id: crypto.randomUUID(),
-          type: 'text',
-          data: chunk.contentChunk,
-        };
+    for (let iteration = 0; iteration < 2; iteration++) {
+      const answerStream = input.config.llm.streamText({
+        messages: agentMessages,
+        tools: iteration === 0 ? imageTool : undefined,
+      });
+      const toolCalls = new Map<string, ToolCall>();
 
-        session.emitBlock(block);
-
-        responseBlockId = block.id;
-      } else {
-        const block = session.getBlock(responseBlockId) as TextBlock | null;
-
-        if (!block) {
-          continue;
+      for await (const chunk of answerStream) {
+        if (chunk.toolCallChunk.length > 0) {
+          chunk.toolCallChunk.forEach((call) => toolCalls.set(call.id, call));
         }
+        if (!chunk.contentChunk) continue;
+        if (!responseBlockId) {
+          const block: TextBlock = { id: crypto.randomUUID(), type: 'text', data: chunk.contentChunk };
+          session.emitBlock(block);
+          responseBlockId = block.id;
+        } else {
+          const block = session.getBlock(responseBlockId) as TextBlock | null;
+          if (!block) continue;
+          block.data += chunk.contentChunk;
+          session.updateBlock(block.id, [{ op: 'replace', path: '/data', value: block.data }]);
+        }
+      }
 
-        block.data += chunk.contentChunk;
+      const calls = [...toolCalls.values()].filter((call) => call.name === 'generate_image');
+      if (!calls.length || !input.config.imageGenerator || iteration > 0) break;
 
-        session.updateBlock(block.id, [
-          {
-            op: 'replace',
-            path: '/data',
-            value: block.data,
-          },
-        ]);
+      agentMessages.push({ role: 'assistant', content: '', tool_calls: calls });
+      for (const call of calls) {
+        const prompt = String(call.arguments.prompt || '').trim();
+        try {
+          if (!prompt) throw new Error('An image prompt is required');
+          const images = await input.config.imageGenerator.generate(prompt);
+          if (images.length === 0) throw new Error('The image API returned no images');
+
+          const imageBlock: ImageBlock = {
+            id: crypto.randomUUID(), type: 'image', data: { prompt, images },
+          };
+          session.emitBlock(imageBlock);
+          agentMessages.push({
+            role: 'tool', id: call.id, name: call.name,
+            content: JSON.stringify({ generated: images.length, prompt }),
+          });
+        } catch (err) {
+          const message = err instanceof Error ? err.message : 'Image generation failed';
+          console.error('Image generation failed:', err);
+          agentMessages.push({
+            role: 'tool', id: call.id, name: call.name,
+            content: JSON.stringify({ error: message }),
+          });
+        }
       }
     }
 

@@ -9,6 +9,7 @@ type Model = {
 type ModelList = {
   embedding: Model[];
   chat: Model[];
+  image?: Model[];
 };
 
 type ProviderMetadata = {
@@ -21,6 +22,7 @@ type MinimalProvider = {
   name: string;
   chatModels: Model[];
   embeddingModels: Model[];
+  imageModels: Model[];
 };
 
 type ModelWithProvider = {

@@ -2,6 +2,7 @@ import { ModelList, ProviderMetadata } from '../types';
 import { UIConfigField } from '@/lib/config/types';
 import BaseLLM from './llm';
 import BaseEmbedding from './embedding';
+import BaseImageGenerator from './image';
 
 abstract class BaseModelProvider<CONFIG> {
   constructor(
@@ -13,6 +14,9 @@ abstract class BaseModelProvider<CONFIG> {
   abstract getModelList(): Promise<ModelList>;
   abstract loadChatModel(modelName: string): Promise<BaseLLM<any>>;
   abstract loadEmbeddingModel(modelName: string): Promise<BaseEmbedding<any>>;
+  async loadImageModel(_modelName: string): Promise<BaseImageGenerator<any>> {
+    throw new Error('This connection does not support image generation');
+  }
   static getProviderConfigFields(): UIConfigField[] {
     throw new Error('Method not implemented.');
   }

@@ -9,7 +9,7 @@ export const POST = async (
   try {
     const { id } = await params;
 
-    const body: Partial<Model> & { type: 'embedding' | 'chat' } =
+    const body: Partial<Model> & { type: 'embedding' | 'chat' | 'image' } =
       await req.json();
 
     if (!body.key || !body.name) {
@@ -55,7 +55,8 @@ export const DELETE = async (
   try {
     const { id } = await params;
 
-    const body: { key: string; type: 'embedding' | 'chat' } = await req.json();
+    const body: { key: string; type: 'embedding' | 'chat' | 'image' } =
+      await req.json();
 
     if (!body.key) {
       return Response.json(

@@ -35,6 +35,10 @@ const Models = ({
           )}
           type="embedding"
         />
+        <ModelSelect
+          providers={values.filter((p) => (p.imageModels ?? []).some((m) => m.key !== 'error'))}
+          type="image"
+        />
       </div>
       <div className="border-t border-light-200 dark:border-dark-200" />
       <div className="flex flex-row justify-between items-center px-6 ">

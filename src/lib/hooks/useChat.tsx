@@ -45,6 +45,7 @@ type ChatContext = {
   hasError: boolean;
   chatModelProvider: ChatModelProvider;
   embeddingModelProvider: EmbeddingModelProvider;
+  imageModelProvider: ImageModelProvider | null;
   researchEnded: boolean;
   setResearchEnded: (ended: boolean) => void;
   setOptimizationMode: (mode: string) => void;
@@ -59,6 +60,7 @@ type ChatContext = {
   rewrite: (messageId: string) => void;
   setChatModelProvider: (provider: ChatModelProvider) => void;
   setEmbeddingModelProvider: (provider: EmbeddingModelProvider) => void;
+  setImageModelProvider: (provider: ImageModelProvider | null) => void;
 };
 
 export interface File {
@@ -73,6 +75,11 @@ interface ChatModelProvider {
 }
 
 interface EmbeddingModelProvider {
+  key: string;
+  providerId: string;
+}
+
+interface ImageModelProvider {
   key: string;
   providerId: string;
 }
@@ -255,6 +262,7 @@ export const chatContext = createContext<ChatContext>({
   optimizationMode: '',
   chatModelProvider: { key: '', providerId: '' },
   embeddingModelProvider: { key: '', providerId: '' },
+  imageModelProvider: null,
   researchEnded: false,
   rewrite: () => {},
   sendMessage: async () => {},
@@ -264,6 +272,7 @@ export const chatContext = createContext<ChatContext>({
   setOptimizationMode: () => {},
   setChatModelProvider: () => {},
   setEmbeddingModelProvider: () => {},
+  setImageModelProvider: () => {},
   setResearchEnded: () => {},
 });
 
@@ -306,6 +315,8 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       key: '',
       providerId: '',
     });
+  const [imageModelProvider, setImageModelProvider] =
+    useState<ImageModelProvider | null>(null);
 
   const [isConfigReady, setIsConfigReady] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -468,6 +479,12 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       setHasError,
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const providerId = localStorage.getItem('imageModelProviderId');
+    const key = localStorage.getItem('imageModelKey');
+    if (providerId && key) setImageModelProvider({ providerId, key });
   }, []);
 
   useEffect(() => {
@@ -772,6 +789,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
           key: embeddingModelProvider.key,
           providerId: embeddingModelProvider.providerId,
         },
+        imageModel: imageModelProvider ?? undefined,
         systemInstructions: localStorage.getItem('systemInstructions'),
       }),
     });
@@ -831,7 +849,9 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         setChatModelProvider,
         chatModelProvider,
         embeddingModelProvider,
+        imageModelProvider,
         setEmbeddingModelProvider,
+        setImageModelProvider,
         researchEnded,
         setResearchEnded,
       }}

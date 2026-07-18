@@ -31,6 +31,11 @@ const embeddingModelSchema: z.ZodType<ModelWithProvider> = z.object({
   key: z.string({ message: 'Embedding model key must be provided' }),
 });
 
+const imageModelSchema: z.ZodType<ModelWithProvider> = z.object({
+  providerId: z.string(),
+  key: z.string(),
+});
+
 const bodySchema = z.object({
   message: messageSchema,
   optimizationMode: z.enum(['speed', 'balanced', 'quality'], {
@@ -44,6 +49,7 @@ const bodySchema = z.object({
   files: z.array(z.string()).optional().default([]),
   chatModel: chatModelSchema,
   embeddingModel: embeddingModelSchema,
+  imageModel: imageModelSchema.optional(),
   systemInstructions: z.string().nullable().optional().default(''),
 });
 
@@ -127,12 +133,15 @@ export const POST = async (req: Request) => {
 
     const registry = new ModelRegistry();
 
-    const [llm, embedding] = await Promise.all([
+    const [llm, embedding, imageGenerator] = await Promise.all([
       registry.loadChatModel(body.chatModel.providerId, body.chatModel.key),
       registry.loadEmbeddingModel(
         body.embeddingModel.providerId,
         body.embeddingModel.key,
       ),
+      body.imageModel
+        ? registry.loadImageModel(body.imageModel.providerId, body.imageModel.key)
+        : undefined,
     ]);
 
     const history: ChatTurnMessage[] = body.history.map((msg) => {
@@ -222,6 +231,7 @@ export const POST = async (req: Request) => {
         mode: body.optimizationMode,
         fileIds: body.files,
         systemInstructions: body.systemInstructions || 'None',
+        imageGenerator,
       },
     });
 
