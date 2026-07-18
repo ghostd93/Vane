@@ -4,19 +4,13 @@ import BaseEmbedding from '../../base/embedding';
 import BaseImageGenerator from '../../base/image';
 import BaseLLM from '../../base/llm';
 import BaseModelProvider from '../../base/provider';
-import { Model, ModelList, ProviderMetadata } from '../../types';
+import { ModelList, ProviderMetadata } from '../../types';
 import OpenAIImageGenerator from './openaiImageGenerator';
 
 type OpenAIImagesConfig = {
   apiKey: string;
   baseURL: string;
 };
-
-const defaultImageModels: Model[] = [
-  { name: 'GPT Image 1', key: 'gpt-image-1' },
-  { name: 'DALL-E 3', key: 'dall-e-3' },
-  { name: 'DALL-E 2', key: 'dall-e-2' },
-];
 
 const providerConfigFields: UIConfigField[] = [
   {
@@ -33,7 +27,7 @@ const providerConfigFields: UIConfigField[] = [
 
 class OpenAIImagesProvider extends BaseModelProvider<OpenAIImagesConfig> {
   async getDefaultModels(): Promise<ModelList> {
-    return { chat: [], embedding: [], image: defaultImageModels };
+    return { chat: [], embedding: [], image: [] };
   }
 
   async getModelList(): Promise<ModelList> {
@@ -41,7 +35,7 @@ class OpenAIImagesProvider extends BaseModelProvider<OpenAIImagesConfig> {
     return {
       chat: [],
       embedding: [],
-      image: [...defaultImageModels, ...(configured.imageModels ?? [])],
+      image: configured.imageModels ?? [],
     };
   }
 
