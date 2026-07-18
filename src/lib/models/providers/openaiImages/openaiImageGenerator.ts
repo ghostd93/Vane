@@ -8,7 +8,12 @@ class OpenAIImageGenerator extends BaseImageGenerator<OpenAIImageConfig> {
 
   constructor(config: OpenAIImageConfig) {
     super(config);
-    this.client = new OpenAI({ apiKey: config.apiKey, baseURL: config.baseURL });
+    this.client = new OpenAI({
+      apiKey: config.apiKey,
+      baseURL: config.baseURL,
+      maxRetries: 0,
+      timeout: 90_000,
+    });
   }
 
   async generate(prompt: string): Promise<GeneratedImage[]> {

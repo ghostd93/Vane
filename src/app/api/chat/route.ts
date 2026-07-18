@@ -219,21 +219,28 @@ export const POST = async (req: Request) => {
       }
     });
 
-    agent.searchAsync(session, {
-      chatHistory: history,
-      followUp: message.content,
-      chatId: body.message.chatId,
-      messageId: body.message.messageId,
-      config: {
-        llm,
-        embedding: embedding,
-        sources: body.sources as SearchSources[],
-        mode: body.optimizationMode,
-        fileIds: body.files,
-        systemInstructions: body.systemInstructions || 'None',
-        imageGenerator,
-      },
-    });
+    void agent
+      .searchAsync(session, {
+        chatHistory: history,
+        followUp: message.content,
+        chatId: body.message.chatId,
+        messageId: body.message.messageId,
+        config: {
+          llm,
+          embedding,
+          sources: body.sources as SearchSources[],
+          mode: body.optimizationMode,
+          fileIds: body.files,
+          systemInstructions: body.systemInstructions || 'None',
+          imageGenerator,
+        },
+      })
+      .catch((err) => {
+        console.error('Chat processing failed:', err);
+        session.emit('error', {
+          data: err instanceof Error ? err.message : 'Chat processing failed',
+        });
+      });
 
     ensureChatExists({
       id: body.message.chatId,

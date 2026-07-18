@@ -54,6 +54,46 @@ class SearchAgent {
         .execute();
     }
 
+    const isImageRequest =
+      !!input.config.imageGenerator &&
+      /\b(generate|create|make|draw|design)\b[\s\S]*\b(image|picture|illustration|artwork|visual|logo|photo)\b/i.test(
+        input.followUp,
+      );
+
+    if (isImageRequest && input.config.imageGenerator) {
+      try {
+        const images = await input.config.imageGenerator.generate(input.followUp);
+        if (images.length === 0) throw new Error('The image API returned no images');
+        session.emitBlock({
+          id: crypto.randomUUID(),
+          type: 'image',
+          data: { prompt: input.followUp, images },
+        });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Image generation failed';
+        console.error('Image generation failed:', err);
+        session.emitBlock({
+          id: crypto.randomUUID(),
+          type: 'text',
+          data: `Image generation failed: ${message}`,
+        });
+      }
+
+      session.emit('data', { type: 'researchComplete' });
+      session.emit('end', {});
+      await db
+        .update(messages)
+        .set({ status: 'completed', responseBlocks: session.getAllBlocks() })
+        .where(
+          and(
+            eq(messages.chatId, input.chatId),
+            eq(messages.messageId, input.messageId),
+          ),
+        )
+        .execute();
+      return;
+    }
+
     const classification = await classify({
       chatHistory: input.chatHistory,
       enabledSources: input.config.sources,
@@ -87,7 +127,7 @@ class SearchAgent {
       searchPromise = researcher.research(session, {
         chatHistory: input.chatHistory,
         followUp: input.followUp,
-        classification: classification,
+        classification,
         config: input.config,
       });
     }
