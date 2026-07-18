@@ -12,11 +12,12 @@ class OpenAIImageGenerator extends BaseImageGenerator<OpenAIImageConfig> {
       apiKey: config.apiKey,
       baseURL: config.baseURL,
       maxRetries: 0,
-      timeout: 90_000,
+      timeout: 300_000,
     });
   }
 
   async generate(prompt: string): Promise<GeneratedImage[]> {
+    const startedAt = Date.now();
     console.info('[images] Calling image API', {
       baseURL: this.config.baseURL,
       model: this.config.model,
@@ -43,6 +44,7 @@ class OpenAIImageGenerator extends BaseImageGenerator<OpenAIImageConfig> {
 
     console.info('[images] Image API returned successfully', {
       imageCount: images.length,
+      durationMs: Date.now() - startedAt,
     });
     return images;
   }
