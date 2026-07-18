@@ -17,6 +17,10 @@ class OpenAIImageGenerator extends BaseImageGenerator<OpenAIImageConfig> {
       prompt,
     });
 
+    if (!response.data) {
+      throw new Error('Image API returned no image data');
+    }
+
     return response.data.map((image) => {
       if (image.b64_json) {
         return {
