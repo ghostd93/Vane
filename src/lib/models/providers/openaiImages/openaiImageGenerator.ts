@@ -25,6 +25,14 @@ class OpenAIImageGenerator extends BaseImageGenerator<OpenAIImageConfig> {
     const response = await this.client.images.generate({
       model: this.config.model,
       prompt,
+      n: 1,
+      size: '1024x1024',
+      response_format: 'b64_json',
+      quality: 'auto',
+      background: 'auto',
+      output_format: 'png',
+      // Vane waits for the completed image so it can persist and render it.
+      stream: false,
     });
 
     if (!response.data) {
