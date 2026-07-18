@@ -114,7 +114,8 @@ const ModelProvider = ({
         </div>
       </div>
       <div className="flex flex-col gap-y-4 px-5 py-4">
-        <div className="flex flex-col gap-y-2">
+        {!supportsImageGeneration && (
+          <div className="flex flex-col gap-y-2">
           <div className="flex flex-row w-full justify-between items-center">
             <p className="text-[11px] lg:text-[11px] font-medium text-black/70 dark:text-white/70 uppercase tracking-wide">
               Chat Models
@@ -167,7 +168,8 @@ const ModelProvider = ({
               </div>
             ) : null}
           </div>
-        </div>
+          </div>
+        )}
 
         {supportsImageGeneration && (
           <div className="flex flex-col gap-y-2">
@@ -206,7 +208,8 @@ const ModelProvider = ({
           </div>
         )}
 
-        <div className="flex flex-col gap-y-2">
+        {!supportsImageGeneration && (
+          <div className="flex flex-col gap-y-2">
           <div className="flex flex-row w-full justify-between items-center">
             <p className="text-[11px] lg:text-[11px] font-medium text-black/70 dark:text-white/70 uppercase tracking-wide">
               Embedding Models
@@ -259,7 +262,8 @@ const ModelProvider = ({
               </div>
             ) : null}
           </div>
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
