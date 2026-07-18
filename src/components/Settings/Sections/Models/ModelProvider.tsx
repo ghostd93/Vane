@@ -75,6 +75,7 @@ const ModelProvider = ({
     modelProvider.embeddingModels.filter((m) => m.key !== 'error').length +
     (modelProvider.imageModels ?? []).filter((m) => m.key !== 'error').length;
   const imageModels = modelProvider.imageModels ?? [];
+  const supportsImageGeneration = modelProvider.type === 'openai-images';
   const hasError =
     modelProvider.chatModels.some((m) => m.key === 'error') ||
     modelProvider.embeddingModels.some((m) => m.key === 'error');
@@ -168,26 +169,42 @@ const ModelProvider = ({
           </div>
         </div>
 
-        <div className="flex flex-col gap-y-2">
-          <div className="flex flex-row w-full justify-between items-center">
-            <p className="text-[11px] lg:text-[11px] font-medium text-black/70 dark:text-white/70 uppercase tracking-wide">
-              Image Models
-            </p>
-            <AddModel providerId={modelProvider.id} setProviders={setProviders} type="image" />
-          </div>
-          {imageModels.length === 0 ? (
-            <p className="text-xs text-black/50 dark:text-white/50">No image models configured</p>
-          ) : (
-            <div className="flex flex-row flex-wrap gap-2">
-              {imageModels.map((model) => (
-                <div key={`${modelProvider.id}-image-${model.key}`} className="flex flex-row items-center space-x-1.5 text-xs text-black/70 dark:text-white/70 rounded-lg bg-light-secondary dark:bg-dark-secondary px-3 py-1.5 border border-light-200 dark:border-dark-200">
-                  <span>{model.name}</span>
-                  <button onClick={() => handleModelDelete('image', model.key)} className="hover:text-red-500 dark:hover:text-red-400 transition-colors"><X size={12} /></button>
-                </div>
-              ))}
+        {supportsImageGeneration && (
+          <div className="flex flex-col gap-y-2">
+            <div className="flex flex-row w-full justify-between items-center">
+              <p className="text-[11px] lg:text-[11px] font-medium text-black/70 dark:text-white/70 uppercase tracking-wide">
+                Image Models
+              </p>
+              <AddModel
+                providerId={modelProvider.id}
+                setProviders={setProviders}
+                type="image"
+              />
             </div>
-          )}
-        </div>
+            {imageModels.length === 0 ? (
+              <p className="text-xs text-black/50 dark:text-white/50">
+                No image models configured
+              </p>
+            ) : (
+              <div className="flex flex-row flex-wrap gap-2">
+                {imageModels.map((model) => (
+                  <div
+                    key={`${modelProvider.id}-image-${model.key}`}
+                    className="flex flex-row items-center space-x-1.5 text-xs text-black/70 dark:text-white/70 rounded-lg bg-light-secondary dark:bg-dark-secondary px-3 py-1.5 border border-light-200 dark:border-dark-200"
+                  >
+                    <span>{model.name}</span>
+                    <button
+                      onClick={() => handleModelDelete('image', model.key)}
+                      className="hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="flex flex-col gap-y-2">
           <div className="flex flex-row w-full justify-between items-center">
